@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>賽博紓壓診所：沉浸式壓力解碼器</title>
+<style>
+:root {
+    --bg-color: #e3f2fd; --card-bg: #ffffff; --primary-color: #1e88e5;
+    --primary-hover: #1565c0; --text-main: #263238; --text-muted: #546e7a;
+    --border-radius: 20px; --pos-color: #2e7d32; --neg-color: #d32f2f;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-color: #121212; --card-bg: #1e1e1e; --primary-color: #64b5f6;
+        --primary-hover: #42a5f5; --text-main: #e0e0e0; --text-muted: #9e9e9e;
+        --pos-color: #66bb6a; --neg-color: #ef5350;
+    }
+}
+:root[data-theme="dark"] {
+    --bg-color: #121212; --card-bg: #1e1e1e; --primary-color: #64b5f6;
+    --primary-hover: #42a5f5; --text-main: #e0e0e0; --text-muted: #9e9e9e;
+    --pos-color: #66bb6a; --neg-color: #ef5350;
+}
+* { box-sizing: border-box; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    background: var(--bg-color); color: var(--text-main); margin: 0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; min-height: 100dvh; /* 手機網址列會伸縮，dvh 會跟著變 */
+    overflow-x: hidden; transition: background 0.3s, color 0.3s;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* 只管點擊，不等雙擊縮放判斷；拿掉手機點擊時的灰色閃光 */
+button, .avatar-option, .option-btn, .platform-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.container { width: 100%; max-width: 600px; padding: 20px; position: relative; z-index: 10; }
+.card {
+    background-color: var(--card-bg); border-radius: var(--border-radius);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15); padding: 30px; text-align: center;
+    transition: background-color 0.3s; position: relative; z-index: 10;
+}
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.85rem; color: var(--text-muted); gap: 8px; flex-wrap: wrap; }
+h1 { font-size: 1.5rem; color: var(--primary-color); margin-bottom: 10px; }
+h4 { color: var(--text-main); text-align: left; margin: 25px 0 10px; font-size: 1rem; }
+p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
+.config-section { background: var(--bg-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left; font-size: 0.85rem; }
+.config-section label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-main); }
+.config-section input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 12px; font-size: 0.9rem; background: var(--card-bg); color: var(--text-main); }
+.avatar-grid { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; }
+.avatar-option { font-size: 1.8rem; cursor: pointer; padding: 5px; border-radius: 50%; border: 2px solid transparent; transition: 0.2s; }
+.avatar-option.selected { border-color: var(--primary-color); background-color: var(--bg-color); transform: scale(1.1); }
+.breathe-circle {
+    width: 120px; height: 120px; background-color: #90caf9; border-radius: 50%; margin: 30px auto;
+    display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;
+    text-align: center; padding: 6px;
+    animation: breatheAnimation 4s infinite ease-in-out;
+}
+@keyframes breatheAnimation { 0% { transform: scale(1); background-color: #90caf9; } 50% { transform: scale(1.3); background-color: #42a5f5; } 100% { transform: scale(1.0); background-color: #90caf9; } }
+.progress { font-size: 0.85rem; color: var(--primary-color); font-weight: bold; margin-bottom: 15px; display: block; text-transform: uppercase; }
+.option-btn { background-color: var(--bg-color); border: 2px solid transparent; border-radius: 14px; padding: 14px; width: 100%; margin-bottom: 12px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; color: var(--text-main); }
+.option-btn:hover { border-color: var(--primary-color); transform: scale(1.02); }
+.draw-btn { background-color: #d32f2f; color: white; border: none; border-radius: 50px; padding: 15px 40px; font-size: 1.2rem; cursor: pointer; transition: 0.2s; font-weight: bold; box-shadow: 0 4px 15px rgba(211,47,47,0.4); width: 100%; margin-top: 10px; }
+.draw-btn:hover { background-color: #b71c1c; transform: translateY(-2px); }
+#draw-result { margin-top: 15px; font-size: 1.05rem; font-weight: bold; color: var(--neg-color); min-height: 30px; white-space: pre-line; }
+.rage-target { position: fixed; background: #ff5252; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: floatRandom 8s forwards linear; user-select: none; transition: transform 0.1s, opacity 0.2s; }
+.rage-target:hover { transform: scale(1.1); background: #ff1744; }
+@keyframes floatRandom { 0% { transform: translateY(105vh) translateX(0); opacity: 0.9; } 100% { transform: translateY(-10vh) translateX(30px); opacity: 0; } }
+.btn { background-color: var(--primary-color); color: white; border: none; border-radius: 50px; padding: 12px 30px; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s, transform 0.1s; }
+.btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+.btn:active { transform: scale(0.95); }
+.ghost { background-color: #90a4ae; font-size: 0.85rem; padding: 9px; }
+.ghost:hover { background-color: #78909c; }
+.hidden { display: none !important; }
+.diagnosis-box {
+    background: var(--bg-color); border-radius: 14px; padding: 16px; margin: 15px 0;
+    font-size: 1rem; font-weight: bold; color: var(--primary-color);
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.diagnosis-box.show { opacity: 1; transform: translateY(0); }
+.prescription-box {
+    background: var(--card-bg); border: 2px dashed var(--primary-color); border-radius: 12px;
+    padding: 16px; margin-top: 15px; text-align: left;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.prescription-box.show { opacity: 1; transform: translateY(0); }
+.prescription-box h3 { margin: 0 0 8px 0; color: var(--neg-color); font-size: 1rem; }
+.prescription-box p { margin: 0; color: var(--text-main); font-size: 0.9rem; line-height: 1.5; }
+#radarChart { width: 100%; max-width: 480px; height: auto; display: block; margin: 10px auto; }
+
+.result-label { color: var(--text-muted); font-size: 0.95rem; margin: 20px 0 0; }
+.result-score { font-size: 3rem; font-weight: bold; color: var(--primary-color); margin: 5px 0 10px; }
+.battery { width: 100%; height: 26px; border: 3px solid var(--text-main); border-radius: 10px; background: var(--bg-color); overflow: hidden; margin-bottom: 15px; }
+.battery-fill { height: 100%; width: 0; transition: width 1s ease, background-color 1s ease; }
+.status { background: var(--bg-color); border-radius: 14px; padding: 14px; font-weight: bold; color: var(--primary-color); margin-bottom: 15px; }
+.calc { text-align: left; background: var(--card-bg); border: 2px dashed var(--primary-color); border-radius: 12px; padding: 12px 14px; font-size: 0.85rem; color: var(--text-main); line-height: 1.8; margin-bottom: 15px; }
+.calc .row { display: flex; justify-content: space-between; gap: 10px; }
+.calc .sum { border-top: 1px dashed var(--primary-color); margin-top: 6px; padding-top: 6px; font-weight: bold; }
+
+.dim-section { text-align: left; margin: 20px 0 5px; }
+.dim-section h3 { font-size: 1rem; color: var(--text-main); margin: 0 0 10px; }
+.dim-row { margin-bottom: 14px; }
+.dim-head { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-main); margin-bottom: 4px; }
+.dim-head .raw { color: var(--text-muted); font-size: 0.75rem; }
+.dim-head .score { font-weight: bold; color: var(--primary-color); }
+.dim-track { height: 14px; background: var(--bg-color); border-radius: 7px; overflow: hidden; }
+.dim-fill { height: 100%; width: 0; border-radius: 7px; background: linear-gradient(90deg, #64b5f6, #1e88e5); transition: width 0.8s ease; }
+
+#history-list { list-style: none; padding: 0; margin: 0; text-align: left; }
+#history-list li {
+    background: var(--card-bg); border: 2px dashed var(--primary-color); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-main); line-height: 1.6;
+}
+#history-list .time { color: var(--text-muted); font-size: 0.8rem; }
+#history-list .drain { color: var(--neg-color); font-weight: bold; }
+.empty { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 10px; }
+
+.lang-switch { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.lang-btn { background-color: var(--card-bg); border: 2px solid transparent; border-radius: 50px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; color: var(--text-main); transition: 0.2s; }
+.lang-btn:hover { border-color: var(--primary-color); }
+.lang-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+.monitor { background: #000; border: 2px solid #238636; border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
+#ecg { display: block; width: 100%; height: 110px; }
+.ecg-stats { display: flex; justify-content: space-between; font-size: 0.8rem; color: #4ade80; margin-bottom: 15px; padding: 0 4px; }
+
+/* ---------- 惡搞病歷戳章 ---------- */
+.stamp-stage {
+    position: relative;
+    height: 0;
+    perspective: 600px;
+    z-index: 20;
+}
+.stamp {
+    position: absolute;
+    top: -110px;
+    right: 10px;
+    width: 110px;
+    height: 110px;
+    border: 6px solid #d32f2f;
+    border-radius: 50%;
+    color: #d32f2f;
+    font-weight: bold;
+    font-size: 0.85rem;
+    white-space: pre-line;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transform-style: preserve-3d;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateZ(-300px) rotateX(40deg) rotate(-15deg);
+}
+.stamp.drop {
+    animation: stampFall 0.7s cubic-bezier(0.3, 0.6, 0.3, 1) forwards;
+}
+@keyframes stampFall {
+    0% {
+        opacity: 0;
+        transform: translateZ(-300px) rotateX(40deg) rotate(-15deg);
+    }
+    55% {
+        opacity: 1;
+        transform: translateZ(0) rotateX(0deg) rotate(8deg) scale(1.15);
+    }
+    75% {
+        transform: translateZ(0) rotateX(0deg) rotate(-5deg) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateZ(0) rotateX(0deg) rotate(-8deg) scale(1);
+    }
+}
+.stamp::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow:
+        inset 0 0 0 2px rgba(211, 47, 47, 0.3),
+        inset 4px 4px 8px rgba(255,255,255,0.4),
+        inset -4px -4px 8px rgba(211,47,47,0.15);
+    pointer-events: none;
+}
+
+/* ---------- 匿名發洩牆 ---------- */
+.wall-btn { background-color: #7e57c2; }
+.wall-btn:hover { background-color: #673ab7; }
+.health-btn { background-color: #00897b; }
+.health-btn:hover { background-color: #00695c; }
+.mode-switch { display: flex; gap: 8px; margin-bottom: 16px; }
+.mode-btn {
+    flex: 1; background-color: var(--bg-color); border: 2px solid transparent; border-radius: 50px;
+    padding: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text-main); transition: 0.2s;
+}
+.mode-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+.input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.input-row input {
+    flex: 1; min-width: 0; padding: 10px 14px; border-radius: 50px; border: 2px solid var(--bg-color);
+    font-size: 0.9rem; background: var(--card-bg); color: var(--text-main);
+}
+.input-row input:focus { outline: none; border-color: var(--primary-color); }
+.send-btn {
+    background-color: var(--primary-color); color: white; border: none; border-radius: 50px;
+    padding: 10px 20px; font-size: 0.9rem; cursor: pointer; white-space: nowrap;
+}
+.send-btn:hover { background-color: var(--primary-hover); }
+#wallView { max-height: 280px; overflow-y: auto; text-align: left; }
+.complaint-card {
+    background: var(--card-bg); border: 2px dashed var(--primary-color); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 8px; font-size: 0.88rem; color: var(--text-main); word-break: break-word;
+}
+#bubbleView { position: relative; height: 280px; background: #0d1117; border-radius: 12px; overflow: hidden; }
+.bubble {
+    position: absolute; bottom: -40px; background: #ff5252; color: white; padding: 6px 14px;
+    border-radius: 20px; font-size: 0.8rem; max-width: 80%; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; animation: floatUp linear forwards;
+}
+@keyframes floatUp {
+    0% { transform: translateY(0); opacity: 0.9; }
+    100% { transform: translateY(-320px); opacity: 0; }
+}
+
+/* ---------- 出院通知書（分享） ---------- */
+.share-section { text-align: left; margin: 20px 0 5px; }
+.share-section h3 { font-size: 1rem; color: var(--text-main); margin: 0 0 4px; }
+.share-hint { color: var(--text-muted); font-size: 0.8rem; margin: 0 0 12px; }
+.platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.platform-btn {
+    background-color: var(--bg-color); border: 2px solid transparent; border-radius: 12px; padding: 12px;
+    font-size: 0.9rem; cursor: pointer; color: var(--text-main); text-align: left; transition: 0.2s;
+}
+.platform-btn:hover { border-color: var(--primary-color); }
+.platform-btn .tone { display: block; font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.preview-box {
+    background: var(--card-bg); border: 2px dashed var(--primary-color); border-radius: 12px; padding: 14px;
+    font-size: 0.85rem; color: var(--text-main); white-space: pre-line; min-height: 60px; margin-bottom: 8px;
+    word-break: break-word;
+}
+.toast { text-align: center; font-size: 0.8rem; color: var(--pos-color); min-height: 20px; }
+
+/* ---------- 院內自主健檢 ---------- */
+.sheet { border: 2px dashed var(--primary-color); border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: left; }
+.sheet h3 { margin: 0 0 8px; font-size: 1rem; color: var(--text-main); }
+.hc-row {
+    display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; padding: 5px 0;
+    border-bottom: 1px dashed var(--text-muted); color: var(--text-main);
+}
+.hc-row:last-child { border-bottom: none; }
+.ok { color: var(--pos-color); font-weight: bold; }
+.bad { color: var(--neg-color); font-weight: bold; }
+#benchBox { display: flex; flex-wrap: wrap; gap: 2px; height: 40px; overflow: hidden; margin-top: 8px; }
+.dot { width: 8px; height: 8px; background: #90caf9; border-radius: 2px; }
+.pulse-track { height: 10px; background: var(--bg-color); border-radius: 5px; overflow: hidden; margin-top: 10px; }
+.pulse-bar { height: 100%; width: 30%; background: var(--primary-color); border-radius: 5px; }
+.pulse-status { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; text-align: left; }
+
+/* 系統設定為「減少動態」時，停掉會動的裝飾 */
+@media (prefers-reduced-motion: reduce) {
+    .breathe-circle { animation: none; }
+    .rage-target { display: none; }
+    .stamp.drop { animation: none; opacity: 1; transform: rotate(-8deg); }
+    .pulse-bar { display: none; }
+    .battery-fill, .dim-fill { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="lang-switch" id="lang-switch">
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="ko">한국어</button>
+    </div>
+
+    <div id="welcome-screen" class="card">
+        <div class="top-bar">
+            <span data-i18n="topTag"></span>
+            <button onclick="toggleTheme(); playClickSound();" id="theme-btn" style="padding:4px 10px;border-radius:6px;cursor:pointer;background:var(--bg-color);color:var(--text-main);border:1px solid #ccc;"></button>
+        </div>
+        <h1 data-i18n="title"></h1>
+        <p data-i18n="subtitle"></p>
+        <div class="config-section">
+            <label data-i18n="avatarLabel"></label>
+            <div class="avatar-grid">
+                <div class="avatar-option selected" onclick="selectAvatar('🐱', this); playClickSound();">🐱</div>
+                <div class="avatar-option" onclick="selectAvatar('🐶', this); playClickSound();">🐶</div>
+                <div class="avatar-option" onclick="selectAvatar('🦊', this); playClickSound();">🦊</div>
+                <div class="avatar-option" onclick="selectAvatar('🐼', this); playClickSound();">🐼</div>
+                <div class="avatar-option" onclick="selectAvatar('🦄', this); playClickSound();">🦄</div>
+            </div>
+            <label for="user-email" data-i18n="emailLabel"></label>
+            <input type="email" id="user-email" placeholder="example@email.com">
+        </div>
+        <button class="btn" data-i18n="enterBtn" onclick="goToBreathe()"></button>
+        <button class="btn wall-btn" data-i18n="wallOpenBtn" onclick="playClickSound(); openWall('welcome-screen')"></button>
+        <button class="btn health-btn" data-i18n="healthOpenBtn" onclick="playClickSound(); openHealth()"></button>
+        <h4 data-i18n="historyTitle"></h4>
+        <ul id="history-list"></ul>
+        <button class="btn ghost" data-i18n="clearBtn" onclick="clearHistory()"></button>
+    </div>
+
+    <div id="breathe-screen" class="card hidden">
+        <h2 data-i18n="breatheTitle"></h2>
+        <p data-i18n="breatheDesc"></p>
+        <div id="user-avatar-display" style="font-size:2.5rem;margin:10px 0;">🐱</div>
+        <div class="breathe-circle" id="breathe-text"></div>
+        <button class="btn" data-i18n="readyBtn" onclick="startQuizFlow()"></button>
+    </div>
+
+    <div id="quiz-screen" class="card hidden">
+        <div class="monitor">
+            <canvas id="ecg" width="500" height="110"></canvas>
+        </div>
+        <div class="ecg-stats">
+            <span id="bpm-display">60 bpm</span>
+            <span id="progress-text" class="progress" style="margin:0;color:#4ade80;">Question 1 of 5</span>
+        </div>
+        <h2 id="question-text">題目載入中...</h2>
+        <div id="options-container"></div>
+        <div id="draw-result"></div>
+    </div>
+
+    <div id="result-screen" class="card hidden">
+        <h1 data-i18n="resultTitle"></h1>
+        <canvas id="radarChart" width="600" height="600"></canvas>
+        <div class="diagnosis-box" id="diagnosis-text">正在分析你的腦內波長……</div>
+        <div class="prescription-box" id="prescription-container"></div>
+
+        <div class="stamp-stage">
+            <div class="stamp" id="stamp" data-i18n="stampText"></div>
+        </div>
+
+        <div class="dim-section">
+            <h3 data-i18n="dimTitle"></h3>
+            <div id="dim-container"></div>
+            <div class="calc" id="dim-calc"></div>
+        </div>
+
+        <p class="result-label" data-i18n="drainLabel"></p>
+        <div class="result-score" id="score-display">0%</div>
+        <div class="battery"><div class="battery-fill" id="fill"></div></div>
+        <div class="status" id="status"></div>
+        <div class="calc" id="calc"></div>
+
+        <div class="share-section">
+            <h3 data-i18n="shareTitle"></h3>
+            <p class="share-hint" data-i18n="shareHint"></p>
+            <div class="platform-grid">
+                <button class="platform-btn" onclick="share('ig')">Instagram<span class="tone" data-i18n="toneIg"></span></button>
+                <button class="platform-btn" onclick="share('threads')">Threads<span class="tone" data-i18n="toneThreads"></span></button>
+                <button class="platform-btn" onclick="share('line')">LINE<span class="tone" data-i18n="toneLine"></span></button>
+                <button class="platform-btn" onclick="share('fb')">Facebook<span class="tone" data-i18n="toneFb"></span></button>
+            </div>
+            <div class="preview-box" id="share-preview"></div>
+            <div class="toast" id="share-toast"></div>
+        </div>
+
+        <button class="btn wall-btn" data-i18n="wallOpenBtn" onclick="playClickSound(); openWall('result-screen')"></button>
+        <button class="btn" data-i18n="restartBtn" onclick="restartTest()"></button>
+    </div>
+
+    <div id="wall-screen" class="card hidden">
+        <h2 data-i18n="wallTitle"></h2>
+
+        <div class="mode-switch">
+            <button class="mode-btn active" data-mode="list" onclick="switchWallMode('list')" data-i18n="wallModeList"></button>
+            <button class="mode-btn" data-mode="bubble" onclick="switchWallMode('bubble')" data-i18n="wallModeBubble"></button>
+        </div>
+
+        <div class="input-row">
+            <input type="text" id="complaintInput" data-i18n-ph="wallPlaceholder" maxlength="40">
+            <button class="send-btn" data-i18n="wallSend" onclick="submitComplaint()"></button>
+        </div>
+
+        <div id="wallView"></div>
+        <div id="bubbleView" class="hidden"></div>
+
+        <button class="btn ghost" data-i18n="wallBack" onclick="playClickSound(); closeWall()"></button>
+    </div>
+
+    <div id="health-screen" class="card hidden">
+        <h2 data-i18n="hcTitle"></h2>
+        <p data-i18n="hcSub"></p>
+
+        <div class="sheet">
+            <h3 data-i18n="hcSheet1"></h3>
+            <div id="refactorRows"></div>
+        </div>
+
+        <div class="sheet">
+            <h3 data-i18n="hcSheet2"></h3>
+            <div id="compatRows"></div>
+            <button class="btn" data-i18n="hcSoundBtn" onclick="testSound()"></button>
+            <div class="pulse-status" id="audioStatus"></div>
+        </div>
+
+        <div class="sheet">
+            <h3 data-i18n="hcSheet3"></h3>
+            <div id="benchRows"></div>
+            <div id="benchBox"></div>
+            <button class="btn" data-i18n="hcBenchBtn" onclick="runBenchmark()"></button>
+            <div class="pulse-track"><div class="pulse-bar" id="pulseBar"></div></div>
+            <div class="pulse-status" id="pulseStatus"></div>
+        </div>
+
+        <button class="btn ghost" data-i18n="wallBack" onclick="playClickSound(); closeHealth()"></button>
+    </div>
+
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+let selectedAvatarSymbol = '🐱';
+let userEmailValue = '';
+let rageInterval = null;
+let animationProgress = 0;
+let animationFrameId = null;
+let prescriptionTimer = null;
+let stampTimer = null;
+let breatheInterval = null;
+let breatheStart = 0;
+let lastResult = null;
+let currentScreen = "welcome-screen";
+let audioUnlocked = false;
+
+const reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+// ================= 院內大櫃子：全站唯一一份公式與音效引擎 =================
+const Clinic = (() => {
+    const math = {
+        // 全站唯一一份「換算百分比」公式
+        toPercent(value, min, max) {
+            if (max === min) return 50;
+            const ratio = (value - min) / (max - min);
+            return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+        }
+    };
+
+    const sound = {
+        ctx: null,
+        ensure() {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            if (!this.ctx) this.ctx = new AC();
+            if (this.ctx.state === "suspended") this.ctx.resume();
+            return this.ctx;
+        },
+        // 喚醒音訊環境，回傳 Promise<boolean>
+        unlock() {
+            const c = this.ensure();
+            if (!c) return Promise.resolve(false);
+            if (c.state === "running") return Promise.resolve(true);
+            return c.resume().then(() => c.state === "running").catch(() => false);
+        },
+        tone({ type, startFreq, endFreq, duration, volume }) {
+            try {
+                const c = this.ensure();
+                if (!c) return;
+                const tm = c.currentTime;
+                const osc = c.createOscillator();
+                const gain = c.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(startFreq, tm);
+                osc.frequency.exponentialRampToValueAtTime(endFreq, tm + duration);
+                gain.gain.setValueAtTime(volume, tm);
+                gain.gain.exponentialRampToValueAtTime(0.001, tm + duration);
+                osc.connect(gain);
+                gain.connect(c.destination);
+                osc.start(tm);
+                osc.stop(tm + duration);
+            } catch (e) {}
+        }
+    };
+
+    return { math, sound };
+})();
+
+// 音訊解鎖：多掛幾種事件，哪個先到就用哪個，成功後立刻拆掉
+const unlockEvents = ["touchend", "click", "keydown"];
+function unlockOnce() {
+    Clinic.sound.unlock().then(ok => {
+        if (!ok) return;
+        unlockEvents.forEach(ev => document.removeEventListener(ev, unlockOnce));
+        audioUnlocked = true;
+        renderAudioStatus();
+    });
+}
+unlockEvents.forEach(ev => document.addEventListener(ev, unlockOnce));
+
+const dimensions = ["日常", "效率", "社交", "心態", "放鬆", "職涯"];
+
+// ---------- 四語物件：每段文字顯示的那一刻才決定語言 ----------
+const L = (zh, en, ja, ko) => ({ zh, en, ja, ko });
+let currentLang = "zh";
+const tr = (obj) => (obj && (obj[currentLang] || obj.zh)) || "";
+
+// 維度名稱翻譯表：內部仍用中文 key，顯示時才查表
+const dimensionNames = {
+    "日常": { zh: "日常", en: "Daily",      ja: "日常",       ko: "일상" },
+    "效率": { zh: "效率", en: "Efficiency", ja: "効率",       ko: "효율" },
+    "社交": { zh: "社交", en: "Social",     ja: "社交",       ko: "사교" },
+    "心態": { zh: "心態", en: "Mindset",    ja: "メンタル",    ko: "멘탈" },
+    "放鬆": { zh: "放鬆", en: "Relax",      ja: "リラックス",  ko: "휴식" },
+    "職涯": { zh: "職涯", en: "Career",     ja: "キャリア",    ko: "커리어" }
+};
+
+const quizData = [
+    { type: "normal",
+      question: L("早上鬧鐘響了，但你昨天熬夜趕專題，現在的你會：", "Your alarm goes off, but you stayed up late on your project. You:", "目覚ましが鳴ったけど、昨夜は課題で徹夜…。あなたは：", "알람이 울렸지만 어젯밤 과제로 밤을 새웠다. 당신은:"),
+      options: [
+        { text: L("直接按掉，催眠自己教授今天會請假", "Hit snooze and convince yourself the professor will call in sick", "スヌーズを押して、先生が休講になると自分に言い聞かせる", "알람을 끄고 교수님이 휴강하길 스스로 세뇌한다"), scores: { "日常": -2, "放鬆": 3 } },
+        { text: L("痛苦地爬起來，靠三杯黑咖啡續命", "Drag yourself up and survive on three black coffees", "苦しみながら起き上がり、ブラックコーヒー3杯で乗り切る", "괴롭게 일어나 블랙커피 세 잔으로 버틴다"), scores: { "效率": 3, "心態": -2 } },
+        { text: L("傳訊息跟同學求救「幫點名」", "Text a classmate to cover your attendance", "クラスメイトに「出席お願い」とメッセージを送る", "친구에게 \"대리 출석 부탁해\"라고 문자한다"), scores: { "社交": 2, "心態": 1 } }
+      ]},
+    { type: "draw",
+      question: L("來到廟宇，面對未知的死線，請誠心搖動籤筒抽出今日運勢：", "At the temple, facing a mysterious deadline, shake the fortune stick sincerely to draw today's luck:", "神社で、見えない締切を前に、心を込めておみくじを引こう：", "사원에서 알 수 없는 마감 앞에, 정성껏 운세 통을 흔들어 오늘의 운세를 뽑아보세요:"),
+      options: [
+        { text: L("【大吉】教授突然宣布延期交件！", "【Great Luck】The professor suddenly extends the deadline!", "【大吉】教授が突然、提出期限を延ばしてくれた！", "【대길】교수님이 갑자기 제출 기한을 연장해 주셨다!"), scores: { "放鬆": 5 } },
+        { text: L("【中吉】剛好找到神級開源程式碼，無痛套用。", "【Good Luck】You find perfect open-source code and drop it in painlessly.", "【中吉】神レベルのオープンソースコードを発見、楽々流用できた。", "【중길】완벽한 오픈소스 코드를 발견해 아무 고통 없이 갖다 썼다."), scores: { "效率": 4 } },
+        { text: L("【大凶】電腦無預警死機，而且你沒存檔。", "【Terrible Luck】Your computer crashes without warning, and you didn't save.", "【大凶】パソコンが突然フリーズ、しかも保存していない。", "【대흉】컴퓨터가 갑자기 꺼졌는데 저장도 안 했다."), scores: { "心態": -5 } }
+      ]},
+    { type: "normal",
+      question: L("突然多出一個小時空檔，你會怎麼做？", "You suddenly get a free hour. What do you do?", "急に1時間ぽっかり空いた。どうする？", "갑자기 한 시간이 비었다. 무엇을 할까?"),
+      options: [
+        { text: L("趕快把今天的待辦事項處理掉", "Knock out today's to-do list", "今日のToDoを一気に片付ける", "오늘 할 일을 얼른 처리한다"), scores: { "效率": 3, "日常": 1 } },
+        { text: L("躺著滑手機，享受難得的空檔", "Lie down and scroll your phone, enjoying the rare break", "寝転んでスマホをいじり、貴重な空き時間を満喫する", "누워서 폰을 보며 귀한 여유를 즐긴다"), scores: { "放鬆": 3 } },
+        { text: L("找朋友聊天", "Chat with a friend", "友達とおしゃべりする", "친구와 수다를 떤다"), scores: { "社交": 3, "心態": 1 } }
+      ]},
+    { type: "normal",
+      question: L("遇到完全不會的問題時，你通常會？", "When you hit a problem you totally can't solve, you usually:", "まったく分からない問題にぶつかったら、たいてい：", "전혀 모르는 문제를 만나면 보통:"),
+      options: [
+        { text: L("自己研究到搞懂", "Dig into it alone until you get it", "分かるまで自分で調べ抜く", "이해할 때까지 혼자 파고든다"), scores: { "效率": 2, "職涯": 3 } },
+        { text: L("先放著，等心情好一點再處理", "Leave it for now and come back when you feel better", "ひとまず放置して、気分が良くなってから取り組む", "일단 두고 기분이 나아지면 다시 한다"), scores: { "放鬆": 2, "心態": 2 } },
+        { text: L("找朋友或同學一起討論", "Discuss it with friends or classmates", "友達やクラスメイトと一緒に相談する", "친구나 동기와 함께 의논한다"), scores: { "社交": 2, "職涯": 1 } }
+      ]},
+    { type: "draw",
+      question: L("想到未來的自己，請抽一支賽博籤，看看今天收到什麼提醒：", "Thinking about your future self, draw a cyber fortune to see today's reminder:", "未来の自分を思い浮かべながら、サイバーおみくじを引いて今日のヒントを受け取ろう：", "미래의 나를 떠올리며 사이버 운세를 뽑고 오늘의 조언을 받아보세요:"),
+      options: [
+        { text: L("【上上籤】把目標拆成小步驟，今天就能前進一點。", "【Excellent Luck】Break your goal into small steps and make a little progress today.", "【大吉】目標を小さなステップに分ければ、今日は少し前進できる。", "【대길】목표를 작은 단계로 나누면 오늘 조금이라도 나아갈 수 있다."), scores: { "效率": 4, "職涯": 2 } },
+        { text: L("【平安籤】不用急著一次變厲害，先照顧好自己。", "【Peaceful Luck】You don't have to improve all at once. Take care of yourself first.", "【平安】一度に成長しなくても大丈夫。まず自分を大切にしよう。", "【평안】한 번에 크게 성장할 필요는 없다. 먼저 자신을 돌보자."), scores: { "放鬆": 3, "心態": 3 } },
+        { text: L("【人緣籤】遇到卡關時，試著找信任的人聊聊。", "【Connection Luck】When you're stuck, try talking with someone you trust.", "【縁結び】行き詰まったら、信頼できる人に話してみよう。", "【인연운】막히는 일이 생기면 믿을 만한 사람과 이야기해 보자."), scores: { "社交": 3, "心態": 1 } }
+      ]},
+    { type: "normal",
+      question: L("收到一則讓你緊張的訊息時，你通常會？", "When you receive a message that makes you nervous, what do you usually do?", "緊張するメッセージが届いたとき、たいていどうする？", "긴장되는 메시지를 받으면 보통 어떻게 하나요?"),
+      options: [
+        { text: L("先看清楚內容，再決定怎麼回覆", "Read it carefully before deciding how to reply", "内容をよく読んでから返信を考える", "내용을 먼저 꼼꼼히 읽고 답장을 정한다"), scores: { "心態": 3, "效率": 1 } },
+        { text: L("立刻找熟悉的人討論", "Immediately discuss it with someone I trust", "すぐに親しい人に相談する", "바로 믿을 만한 사람과 상의한다"), scores: { "社交": 3, "心態": 1 } },
+        { text: L("先放下手機，等自己冷靜一點", "Put my phone down and give myself time to settle", "いったんスマホを置き、落ち着く時間を取る", "휴대폰을 내려놓고 마음이 가라앉을 때까지 기다린다"), scores: { "放鬆": 3, "心態": 2 } }
+      ]},
+    { type: "normal",
+      question: L("待辦事項突然堆在一起，你會怎麼安排？", "When several tasks pile up at once, how do you organize them?", "やることが一度に増えたら、どう整理する？", "할 일이 한꺼번에 쌓이면 어떻게 정리하나요?"),
+      options: [
+        { text: L("列出清單，依期限和重要性排序", "Make a list and rank tasks by urgency and importance", "リストを作り、期限と重要度で順番を決める", "목록을 만들고 마감과 중요도에 따라 순서를 정한다"), scores: { "效率": 3, "日常": 2 } },
+        { text: L("先完成最容易開始的一件", "Start with the task that feels easiest to begin", "まずは取りかかりやすいものから始める", "가장 시작하기 쉬운 일부터 처리한다"), scores: { "效率": 2, "心態": 1 } },
+        { text: L("有點不知所措，先休息一下", "Feel overwhelmed and take a short break first", "少し戸惑うので、まずひと休みする", "막막해서 우선 잠깐 쉰다"), scores: { "放鬆": 2, "心態": -1 } }
+      ]},
+    { type: "normal",
+      question: L("和別人合作時，最重要的是什麼？", "What matters most to you when working with others?", "誰かと協力するとき、最も大切なのは？", "다른 사람과 협업할 때 가장 중요한 것은 무엇인가요?"),
+      options: [
+        { text: L("分工清楚、各自知道期限", "Clear roles and deadlines for everyone", "役割分担と期限が明確であること", "역할과 마감 기한이 명확한 것"), scores: { "效率": 2, "職涯": 3 } },
+        { text: L("能自在溝通、互相幫忙", "Open communication and mutual support", "気軽に話し合い、助け合えること", "편하게 소통하고 서로 돕는 것"), scores: { "社交": 3, "職涯": 2 } },
+        { text: L("保留各自的空間和彈性", "Having personal space and flexibility", "それぞれの時間と柔軟性を尊重すること", "각자의 공간과 유연성을 존중하는 것"), scores: { "放鬆": 2, "心態": 2 } }
+      ]},
+    { type: "normal",
+      question: L("忙了一整天後，你最想用什麼方式恢復精神？", "After a busy day, how do you most want to recharge?", "忙しい一日のあと、どんな方法で元気を取り戻したい？", "바쁜 하루를 보낸 뒤 어떤 방법으로 기운을 회복하고 싶나요?"),
+      options: [
+        { text: L("完成一件小事，讓自己有收尾感", "Finish one small task for a sense of closure", "小さなことを一つ終わらせ、区切りをつける", "작은 일 하나를 끝내고 마무리한 느낌을 얻는다"), scores: { "效率": 2, "日常": 2 } },
+        { text: L("找朋友聊聊天或分享今天的事", "Talk with a friend and share the day's events", "友達と話して今日の出来事を共有する", "친구와 이야기하며 오늘 있었던 일을 나눈다"), scores: { "社交": 3, "放鬆": 1 } },
+        { text: L("暫時什麼都不做，好好休息", "Do nothing for a while and rest properly", "しばらく何もせず、ゆっくり休む", "잠시 아무것도 하지 않고 푹 쉰다"), scores: { "放鬆": 3, "心態": 2 } }
+      ]},
+    { type: "draw",
+      question: L("最後一關，請再次把命運交給賽博籤筒！", "Final round. Entrust your fate to the cyber fortune stick once more!", "最終関門。もう一度、運命をサイバーおみくじに委ねよう！", "마지막 관문. 다시 한번 사이버 운세 통에 운명을 맡겨보세요!"),
+      options: [
+        { text: L("【神籤】突然獲得神秘力量，今天效率爆表！", "【Divine Luck】A mysterious power surges in. Your efficiency is off the charts today!", "【神籤】謎の力が湧き、今日の効率は爆上がり！", "【신첨】신비한 힘이 솟아 오늘 효율이 폭발한다!"), scores: { "效率": 5, "職涯": 2 } },
+        { text: L("【平籤】今天適合好好休息，明天再戰。", "【Plain Luck】Today is for resting. Fight again tomorrow.", "【平籤】今日はしっかり休んで、明日また戦おう。", "【평첨】오늘은 푹 쉬고 내일 다시 싸우자."), scores: { "放鬆": 4, "心態": 2 } },
+        { text: L("【凶籤】打開電腦發現昨天的程式全部消失。", "【Bad Luck】You open your laptop and find yesterday's code has vanished.", "【凶籤】パソコンを開くと、昨日のコードが全部消えていた。", "【흉첨】노트북을 켜니 어제 짠 코드가 전부 사라졌다."), scores: { "心態": -5, "日常": -2 } }
+      ]}
+];
+
+const prescriptionDB = {
+    "日常": L("今天不用早睡了，反正你也不會睡。去買杯手搖飲，全糖去冰，糖分才是良藥。", "Skip the early bedtime, you won't sleep anyway. Grab a bubble tea, full sugar, no ice. Sugar is the real medicine.", "今日は早寝しなくていい、どうせ眠れない。フルシュガー氷なしのタピオカドリンクを買おう。糖分こそ良薬。", "오늘은 일찍 잘 필요 없다, 어차피 못 잔다. 당 100% 얼음 없는 버블티를 사 마시자. 당분이 곧 약이다."),
+    "效率": L("把手機關機兩小時，看著天花板發呆。這也是一種產出，只是產出是「無」。", "Turn off your phone for two hours and stare at the ceiling. It's a kind of output, the output is \"nothing.\"", "スマホの電源を2時間切って、天井をぼんやり眺めよう。これも立派なアウトプット。ただし成果は「無」。", "휴대폰을 두 시간 꺼 두고 천장을 멍하니 바라보자. 이것도 산출물이다, 결과물이 '무'일 뿐."),
+    "社交": L("取消今晚所有的局，你需要跟棉被獨處的 me time，誰傳訊息都當作沒看到。", "Cancel every plan tonight. You need me-time alone with your blanket. Pretend you saw no messages.", "今夜の予定は全部キャンセル。必要なのは布団と二人きりのミータイム。誰からのメッセージも見なかったことに。", "오늘 밤 약속은 전부 취소하자. 이불과 단둘이 보내는 me time이 필요하다. 누가 연락해도 못 본 척."),
+    "心態": L("對著鏡子大喊三聲「我已經很努力了」，然後去睡覺，明天的事明天再說。", "Shout \"I've already tried so hard\" at the mirror three times, then go to bed. Tomorrow's problems can wait.", "鏡に向かって「私はもう十分がんばった」と3回叫んで寝よう。明日のことは明日考える。", "거울을 보고 \"나 충분히 열심히 했어\"를 세 번 외치고 자자. 내일 일은 내일 생각하자."),
+    "放鬆": L("去便利商店走一圈，什麼都不買，純欣賞架上的零食，療癒效果驚人。", "Walk a lap around a convenience store, buy nothing, just admire the snacks. The healing effect is astonishing.", "コンビニを一周して、何も買わず、棚のお菓子を眺めるだけ。癒やし効果は絶大。", "편의점을 한 바퀴 돌며 아무것도 사지 말고 진열된 과자만 구경하자. 힐링 효과가 놀랍다."),
+    "職涯": L("打開求職網站逛十分鐘，看看別人的職缺內容，你會突然覺得現在好像還行。", "Browse a job site for ten minutes. Seeing other openings might make your current situation look fine.", "求人サイトを10分眺めてみよう。他の求人を見ると、今の状況も悪くない気がしてくる。", "구직 사이트를 10분 둘러보자. 다른 공고를 보면 지금도 나쁘지 않다는 생각이 든다.")
+};
+
+const rageWords = [
+    L("論文死線", "Thesis deadline", "論文の締切", "논문 마감"),
+    L("明天要交報告", "Report due tomorrow", "明日提出のレポート", "내일 제출할 보고서"),
+    L("長輩群組訊息", "Family group-chat messages", "親戚グループのメッセージ", "어른들 단톡방 메시지"),
+    L("存款餘額不足", "Low bank balance", "残高不足", "잔액 부족"),
+    L("專案又改需求", "Requirements changed again", "また仕様変更", "프로젝트 요구사항 또 변경")
+];
+
+const STORAGE_KEY = "cyberClinicHistory";
+const MAX_RECORDS = 5;
+
+let userScores = { "日常": 0, "效率": 0, "社交": 0, "心態": 0, "放鬆": 0, "職涯": 0 };
+let currentQuestionIndex = 0;
+let answerLog = [];
+
+// ---------- 多國語系 ----------
+const i18n = {
+    topTag: {
+        zh: "✨ 賽博紓壓診所", en: "✨ Cyber Stress Clinic",
+        ja: "✨ サイバー・ストレスクリニック", ko: "✨ 사이버 스트레스 클리닉"
+    },
+    title: {
+        zh: "賽博紓壓診所", en: "Cyber Stress Clinic",
+        ja: "サイバー・ストレスクリニック", ko: "사이버 스트레스 클리닉"
+    },
+    subtitle: {
+        zh: "結合廟宇抽籤、動態六角雷達圖、即時心電圖、惡言消滅器、腦內電池耗損率、六維度歸類、病歷本、認證戳章、匿名發洩牆、出院通知書與院內自主健檢的頂級心靈小工具。",
+        en: "Fortune draws, radar charts, live ECG, battery drain readings, absurd prescriptions, an official stamp, an anonymous vent wall, discharge notices and a self-checkup, all in one app.",
+        ja: "おみくじ、レーダーチャート、リアルタイム心電図、脳内バッテリー診断、ふざけた処方箋、認証スタンプ、匿名の吐き出しウォール、退院通知書、院内セルフ健診が詰まった癒しツール。",
+        ko: "운세뽑기, 레이더 차트, 실시간 심전도, 뇌 배터리 진단, 엉뚱한 처방전, 인증 도장, 익명 하소연 벽, 퇴원 통지서, 자체 건강검진이 담긴 힐링 도구."
+    },
+    avatarLabel: {
+        zh: "選擇你的今日心情頭像：", en: "Pick today's mood avatar:",
+        ja: "今日の気分アバターを選んでください：", ko: "오늘의 기분 아바타를 선택하세요："
+    },
+    emailLabel: {
+        zh: "📧 輸入 Email 記錄長期分析 (選填)：", en: "📧 Email for long-term tracking (optional):",
+        ja: "📧 長期分析用メール（任意）：", ko: "📧 장기 분석용 이메일 (선택):"
+    },
+    enterBtn: {
+        zh: "進入紓壓診所", en: "Enter the Clinic",
+        ja: "クリニックへ入る", ko: "클리닉 입장하기"
+    },
+    historyTitle: {
+        zh: "📜 歷史病歷（最多保留 5 筆）", en: "📜 Medical History (up to 5 records)",
+        ja: "📜 カルテ履歴（最大5件）", ko: "📜 진료 기록 (최대 5개)"
+    },
+    historyEmpty: {
+        zh: "病歷本是空的", en: "No records yet",
+        ja: "カルテは空です", ko: "기록이 비어 있어요"
+    },
+    histDrain: { zh: "耗損率", en: "Drain", ja: "消耗率", ko: "소모율" },
+    histWeak: { zh: "最缺", en: "Weakest", ja: "最も不足", ko: "가장 부족" },
+    clearBtn: {
+        zh: "清空病歷", en: "Clear History",
+        ja: "カルテを消去", ko: "기록 지우기"
+    },
+    themeLight: { zh: "☀️ 亮色", en: "☀️ Light", ja: "☀️ ライト", ko: "☀️ 라이트" },
+    themeDark:  { zh: "🌙 暗色", en: "🌙 Dark", ja: "🌙 ダーク", ko: "🌙 다크" },
+    breatheTitle: {
+        zh: "🧘 調整呼吸，放鬆心情", en: "🧘 Take a Breath, Relax",
+        ja: "🧘 呼吸を整えて、心を落ち着けよう", ko: "🧘 숨을 고르고 마음을 편안하게"
+    },
+    breatheDesc: {
+        zh: "請跟隨圓縮放的節奏，深吸氣... 吐氣...",
+        en: "Follow the circle's rhythm — breathe in... breathe out...",
+        ja: "円の動きに合わせて、深く吸って...吐いて...",
+        ko: "원의 리듬에 맞춰 깊게 들이쉬고... 내쉬세요..."
+    },
+    breathIn: { zh: "吸氣...", en: "Breathe in...", ja: "吸って...", ko: "들이쉬고..." },
+    breathOut: { zh: "吐氣...", en: "Breathe out...", ja: "吐いて...", ko: "내쉬고..." },
+    readyBtn: {
+        zh: "準備好了，開始解碼", en: "I'm Ready, Let's Start",
+        ja: "準備完了、始めよう", ko: "준비됐어요, 시작할게요"
+    },
+    progressFmt: {
+        zh: "第 {n} 題 / 共 {total} 題", en: "Question {n} of {total}",
+        ja: "第 {n} 問 / 全 {total} 問", ko: "{n} / {total} 번 문항"
+    },
+    drawBtn: {
+        zh: "🎲 搖動籤筒", en: "🎲 Shake the Fortune Stick",
+        ja: "🎲 おみくじを振る", ko: "🎲 운세통 흔들기"
+    },
+    drawResultPrefix: {
+        zh: "鏘鏘！你抽到了：", en: "Ta-da! You drew:",
+        ja: "ジャーン！引いたのは：", ko: "짜잔! 뽑은 결과:"
+    },
+    analyzing: {
+        zh: "正在分析你的腦內波長……", en: "Analyzing your brainwaves...",
+        ja: "脳波を分析中……", ko: "뇌파를 분석하는 중……"
+    },
+    resultTitle: {
+        zh: "🏥 賽博病歷診斷報告", en: "🏥 Cyber Diagnosis Report",
+        ja: "🏥 サイバー診断レポート", ko: "🏥 사이버 진단 리포트"
+    },
+    diagnosisFmt: {
+        zh: "{avatar} 診斷結果：你今天最突出的是「{top}」({topVal}分)，最需要留意的是「{low}」({lowVal}分)",
+        en: "{avatar} Diagnosis: your strongest today is \"{top}\" ({topVal} pts), and the one to watch is \"{low}\" ({lowVal} pts)",
+        ja: "{avatar} 診断結果：今日いちばん強いのは「{top}」({topVal}点)、気をつけたいのは「{low}」({lowVal}点)",
+        ko: "{avatar} 진단 결과: 오늘 가장 두드러진 건 「{top}」({topVal}점), 가장 주의할 건 「{low}」({lowVal}점)"
+    },
+    prescTitle: {
+        zh: "💊 醫師處方籤（缺乏：{dim}）", en: "💊 Doctor's Prescription (lacking: {dim})",
+        ja: "💊 医師の処方箋（不足：{dim}）", ko: "💊 의사 처방전 (부족: {dim})"
+    },
+    stampText: {
+        zh: "賽博紓壓\n診所認證", en: "CYBER CLINIC\nCERTIFIED",
+        ja: "サイバー\nクリニック認定", ko: "사이버 클리닉\n인증"
+    },
+    dimTitle: {
+        zh: "📐 六維度歸類（0~100）", en: "📐 Six Dimensions (0~100)",
+        ja: "📐 6つの指標（0~100）", ko: "📐 6개 지표 (0~100)"
+    },
+    dimRaw: {
+        zh: "(原始 {raw} 分，範圍 {min}~{max})", en: "(raw {raw}, range {min}~{max})",
+        ja: "(素点 {raw}、範囲 {min}~{max})", ko: "(원점수 {raw}, 범위 {min}~{max})"
+    },
+    calcTitle: {
+        zh: "換算過程", en: "Calculation", ja: "換算過程", ko: "환산 과정"
+    },
+    dimScoreUnit: {
+        zh: "{v} 分", en: "{v} pts", ja: "{v} 点", ko: "{v}점"
+    },
+    qRow: {
+        zh: "Q{n} 得 {s} 分", en: "Q{n}: {s} pts", ja: "Q{n} {s} 点", ko: "Q{n}: {s}점"
+    },
+    rangeRow: {
+        zh: "範圍 {min} ~ {max}", en: "range {min} ~ {max}", ja: "範囲 {min} ~ {max}", ko: "범위 {min} ~ {max}"
+    },
+    totalRow: {
+        zh: "總分 {total}", en: "Total {total}", ja: "合計 {total}", ko: "총점 {total}"
+    },
+    fullRangeRow: {
+        zh: "整份範圍 {min} ~ {max}", en: "Full range {min} ~ {max}",
+        ja: "全体の範囲 {min} ~ {max}", ko: "전체 범위 {min} ~ {max}"
+    },
+    formulaRow: {
+        zh: "耗損率 = (1 − ({total} − {min}) ÷ {span}) × 100",
+        en: "Drain = (1 − ({total} − {min}) ÷ {span}) × 100",
+        ja: "消耗率 = (1 − ({total} − {min}) ÷ {span}) × 100",
+        ko: "소모율 = (1 − ({total} − {min}) ÷ {span}) × 100"
+    },
+    drainLabel: {
+        zh: "今日綜合腦內電池耗損率", en: "Today's Brain Battery Drain",
+        ja: "本日の脳内バッテリー消耗率", ko: "오늘의 뇌 배터리 소모율"
+    },
+    statusGood: {
+        zh: "🟢 電量充足：今天的你狀態不錯，可以放心衝。",
+        en: "🟢 Battery full: you're doing great today, go for it.",
+        ja: "🟢 バッテリー十分：今日は調子がいい、思い切り行こう。",
+        ko: "🟢 배터리 충분: 오늘 컨디션 좋아요, 마음껏 달리세요."
+    },
+    statusMid: {
+        zh: "🟡 省電模式：還撐得住，但別再亂接新任務了。",
+        en: "🟡 Power saving: still holding on, but no more new tasks.",
+        ja: "🟡 省電力モード：まだ持つけど、新しいタスクはNG。",
+        ko: "🟡 절전 모드: 아직 버티지만 새 일은 받지 마세요."
+    },
+    statusLow: {
+        zh: "🟠 低電量警告：建議立刻找地方充電，手搖飲算充電。",
+        en: "🟠 Low battery: go recharge right now, bubble tea counts.",
+        ja: "🟠 低バッテリー警告：今すぐ充電を。タピオカも充電のうち。",
+        ko: "🟠 저전력 경고: 지금 바로 충전하세요, 버블티도 충전입니다."
+    },
+    statusCritical: {
+        zh: "🔴 即將關機：請放下手邊所有事情，現在。",
+        en: "🔴 About to shut down: drop everything, right now.",
+        ja: "🔴 シャットダウン寸前：すべて手を止めて、今すぐ。",
+        ko: "🔴 종료 직전: 하던 일을 모두 멈추세요, 지금."
+    },
+    restartBtn: {
+        zh: "重新掛號測驗", en: "Take the Test Again",
+        ja: "もう一度受診する", ko: "다시 검사하기"
+    },
+
+    // ----- 匿名發洩牆 -----
+    wallOpenBtn: {
+        zh: "🧱 前往匿名發洩牆", en: "🧱 Go to the Vent Wall",
+        ja: "🧱 匿名の吐き出しウォールへ", ko: "🧱 익명 하소연 벽으로"
+    },
+    wallTitle: {
+        zh: "🧱 匿名發洩牆", en: "🧱 Anonymous Vent Wall",
+        ja: "🧱 匿名の吐き出しウォール", ko: "🧱 익명 하소연 벽"
+    },
+    wallModeList: { zh: "條列牆模式", en: "Wall Mode", ja: "リストモード", ko: "목록 모드" },
+    wallModeBubble: { zh: "氣泡漂浮模式", en: "Floating Bubbles", ja: "バブルモード", ko: "버블 모드" },
+    wallPlaceholder: {
+        zh: "今天被什麼氣到了？", en: "What annoyed you today?",
+        ja: "今日は何にイラッとした？", ko: "오늘 뭐 때문에 화났어요?"
+    },
+    wallSend: { zh: "丟出去", en: "Throw it", ja: "投げる", ko: "던지기" },
+    wallEmpty: {
+        zh: "目前牆上還沒有人發洩，當第一個吧", en: "Nobody has vented yet, be the first",
+        ja: "まだ誰も吐き出していません、最初の一人になろう", ko: "아직 아무도 하소연하지 않았어요, 첫 번째가 되어보세요"
+    },
+    wallBack: { zh: "← 返回", en: "← Back", ja: "← 戻る", ko: "← 돌아가기" },
+
+    // ----- 出院通知書（分享） -----
+    shareTitle: {
+        zh: "📋 出院通知書產生器", en: "📋 Discharge Notice Generator",
+        ja: "📋 退院通知書ジェネレーター", ko: "📋 퇴원 통지서 생성기"
+    },
+    shareHint: {
+        zh: "同一份診斷，四種語氣，自己挑一種出院", en: "One diagnosis, four tones. Pick one to check out.",
+        ja: "同じ診断、4つの口調。好きなもので退院しよう", ko: "같은 진단, 네 가지 말투. 하나 골라 퇴원하세요"
+    },
+    toneIg: { zh: "標籤體 · 大量 hashtag", en: "Hashtag style", ja: "タグ調 · ハッシュタグ多め", ko: "태그체 · 해시태그 가득" },
+    toneThreads: { zh: "迷因體 · 一句話帶梗", en: "Meme style · one-liner", ja: "ミーム調 · 一言ネタ", ko: "밈체 · 한 줄 드립" },
+    toneLine: { zh: "閒聊體 · 像在跟朋友碎念", en: "Chatty · like texting a friend", ja: "雑談調 · 友達にぼやく感じ", ko: "수다체 · 친구에게 푸념" },
+    toneFb: { zh: "公告體 · 一本正經的反差", en: "Official notice · deadpan", ja: "お知らせ調 · 真面目なギャップ", ko: "공지체 · 진지한 반전" },
+    sharePreviewEmpty: {
+        zh: "選一個平台，看看文案長什麼樣", en: "Pick a platform to preview the text",
+        ja: "プラットフォームを選んで文面をプレビュー", ko: "플랫폼을 골라 문구를 미리 보세요"
+    },
+    shareNeedResult: {
+        zh: "請等診斷結果出現後再分享", en: "Please wait for the diagnosis result first",
+        ja: "診断結果が出てからシェアしてください", ko: "진단 결과가 나온 뒤에 공유해 주세요"
+    },
+    shareCopied: {
+        zh: "文案已複製，貼上去就能發了", en: "Text copied, just paste and post",
+        ja: "コピーしました。貼り付けて投稿できます", ko: "복사 완료, 붙여넣어 올리세요"
+    },
+    shareCopiedIg: {
+        zh: "文案已複製，打開 Instagram 貼上即可", en: "Text copied, open Instagram and paste",
+        ja: "コピーしました。Instagramを開いて貼り付けてください", ko: "복사 완료, Instagram을 열어 붙여넣으세요"
+    },
+    shareCopiedThreads: {
+        zh: "文案已複製，打開 Threads 貼上即可", en: "Text copied, open Threads and paste",
+        ja: "コピーしました。Threadsを開いて貼り付けてください", ko: "복사 완료, Threads를 열어 붙여넣으세요"
+    },
+    shareFail: {
+        zh: "複製失敗，請手動選取文字", en: "Copy failed, please select the text manually",
+        ja: "コピーに失敗しました。手動で選択してください", ko: "복사 실패, 직접 선택해 주세요"
+    },
+    shareIg: {
+        zh: "🏥 今日賽博診斷\n電力剩餘 {remain}%\n#腦內電池 #{weak}不夠用 #賽博紓壓診所",
+        en: "🏥 Today's Cyber Diagnosis\nBattery left: {remain}%\n#BrainBattery #Low{weak} #CyberStressClinic",
+        ja: "🏥 今日のサイバー診断\nバッテリー残量 {remain}%\n#脳内バッテリー #{weak}不足 #サイバークリニック",
+        ko: "🏥 오늘의 사이버 진단\n배터리 잔량 {remain}%\n#뇌배터리 #{weak}부족 #사이버클리닉"
+    },
+    shareThreads: {
+        zh: "耗損 {drain}%，{weak}已陣亡 🫠",
+        en: "{drain}% drained, {weak} is dead 🫠",
+        ja: "消耗 {drain}%、{weak}は戦死した 🫠",
+        ko: "소모 {drain}%, {weak} 전사했다 🫠"
+    },
+    shareLine: {
+        zh: "欸我剛測完\n今天電池剩 {remain}%\n醫生說我「{weak}」快不行了\n處方：{advice}",
+        en: "hey I just took the test\nbattery's at {remain}% today\nthe doctor says my \"{weak}\" is about to die\nprescription: {advice}",
+        ja: "ねえ今テスト終わった\n今日の電池は残り {remain}%\n先生に「{weak}」がもう限界と言われた\n処方：{advice}",
+        ko: "야 나 방금 테스트 끝냈는데\n오늘 배터리 {remain}% 남았대\n의사가 내 「{weak}」 곧 죽는다더라\n처방: {advice}"
+    },
+    shareFb: {
+        zh: "【賽博紓壓診所 官方出院通知書】\n本人今日接受心理壓力檢測，綜合評估電量剩餘 {remain}%。\n建議多加休息，避免過度操勞。",
+        en: "[Cyber Stress Clinic Official Discharge Notice]\nThe undersigned underwent a mental stress screening today; remaining battery is assessed at {remain}%.\nRest is advised; overwork should be avoided.",
+        ja: "【サイバー・ストレスクリニック 公式退院通知書】\n本人は本日心理ストレス検査を受け、総合評価の残量は {remain}% でした。\n十分な休息を取り、過労を避けることをお勧めします。",
+        ko: "【사이버 스트레스 클리닉 공식 퇴원 통지서】\n본인은 오늘 심리 스트레스 검사를 받았으며, 종합 평가 잔여 배터리는 {remain}%입니다.\n충분한 휴식을 취하고 과로를 피할 것을 권고합니다."
+    },
+
+    // ----- 院內自主健檢 -----
+    healthOpenBtn: {
+        zh: "🩺 院內自主健檢", en: "🩺 Clinic Self-Checkup",
+        ja: "🩺 院内セルフ健診", ko: "🩺 원내 자체 건강검진"
+    },
+    hcTitle: {
+        zh: "🩺 院內自主健檢", en: "🩺 Clinic Self-Checkup",
+        ja: "🩺 院内セルフ健診", ko: "🩺 원내 자체 건강검진"
+    },
+    hcSub: {
+        zh: "診所替自己掛號，三張檢驗單", en: "The clinic registers itself: three test sheets",
+        ja: "クリニックが自分を受診：3枚の検査票", ko: "클리닉이 스스로 접수합니다: 검사지 세 장"
+    },
+    hcSheet1: {
+        zh: "📁 檢驗單一：病歷室整理（重構）", en: "📁 Sheet 1: Records Room (Refactoring)",
+        ja: "📁 検査票1：カルテ室の整理（リファクタ）", ko: "📁 검사지 1: 기록실 정리 (리팩터링)"
+    },
+    hcSheet2: {
+        zh: "📱 檢驗單二：換裝置掛號（相容性）", en: "📱 Sheet 2: Other Devices (Compatibility)",
+        ja: "📱 検査票2：別デバイスで受診（互換性）", ko: "📱 검사지 2: 다른 기기로 접수 (호환성)"
+    },
+    hcSheet3: {
+        zh: "💓 檢驗單三：量院內心跳（效能）", en: "💓 Sheet 3: Clinic Heartbeat (Performance)",
+        ja: "💓 検査票3：院内の鼓動を測る（パフォーマンス）", ko: "💓 검사지 3: 원내 심박 측정 (성능)"
+    },
+    hcR1: {
+        zh: "耗損率（總分 14，範圍 -5 ~ 24）", en: "Drain (total 14, range -5 ~ 24)",
+        ja: "消耗率（合計14、範囲 -5 ~ 24）", ko: "소모율 (총점 14, 범위 -5 ~ 24)"
+    },
+    hcR2: {
+        zh: "心態歸一化（原始 2，範圍 -10 ~ 5）", en: "Mindset normalized (raw 2, range -10 ~ 5)",
+        ja: "メンタル正規化（素点2、範囲 -10 ~ 5）", ko: "멘탈 정규화 (원점수 2, 범위 -10 ~ 5)"
+    },
+    hcR3: {
+        zh: "心電圖進度（答 3 題 / 共 5 題）", en: "ECG progress (3 of 5 answered)",
+        ja: "心電図の進捗（5問中3問回答）", ko: "심전도 진행률 (5문항 중 3문항)"
+    },
+    hcOk: { zh: "✅ 支援", en: "✅ Supported", ja: "✅ 対応", ko: "✅ 지원" },
+    hcNo: { zh: "❌ 不支援", en: "❌ Unsupported", ja: "❌ 非対応", ko: "❌ 미지원" },
+    hcSoundBtn: { zh: "試播一聲", en: "Play a Test Sound", ja: "テスト音を鳴らす", ko: "테스트 소리 재생" },
+    hcAudioWait: {
+        zh: "音訊狀態：等待第一次觸碰", en: "Audio: waiting for the first touch",
+        ja: "オーディオ状態：最初のタッチ待ち", ko: "오디오 상태: 첫 터치 대기 중"
+    },
+    hcAudioOk: {
+        zh: "音訊狀態：已解鎖 ✅", en: "Audio: unlocked ✅",
+        ja: "オーディオ状態：解除済み ✅", ko: "오디오 상태: 잠금 해제됨 ✅"
+    },
+    hcBenchBtn: { zh: "開始量測", en: "Start Benchmark", ja: "計測開始", ko: "측정 시작" },
+    hcNaive: {
+        zh: "逐筆寫入（每圈強迫重算版面）", en: "One-by-one writes (forces layout each loop)",
+        ja: "1件ずつ書き込み（毎回レイアウト再計算）", ko: "하나씩 쓰기 (매번 레이아웃 재계산)"
+    },
+    hcBatch: {
+        zh: "批次寫入（Fragment 一次放）", en: "Batch write (one Fragment insert)",
+        ja: "一括書き込み（Fragmentで一度に）", ko: "일괄 쓰기 (Fragment 한 번에)"
+    },
+    hcDiff: { zh: "差距", en: "Difference", ja: "差", ko: "차이" },
+    hcDiffVal: { zh: "約 {x} 倍", en: "about {x}×", ja: "約 {x} 倍", ko: "약 {x}배" },
+    hcPulseRun: {
+        zh: "動畫：執行中（切到別的分頁會自動暫停）", en: "Animation: running (auto-pauses in background tabs)",
+        ja: "アニメーション：実行中（別タブでは自動停止）", ko: "애니메이션: 실행 중 (다른 탭에서는 자동 정지)"
+    },
+    hcPulseReduced: {
+        zh: "系統設定為減少動態，已停用動畫", en: "Reduced motion is on, animation disabled",
+        ja: "システムが「視差効果を減らす」設定のため、アニメーションを停止中", ko: "시스템이 동작 줄이기 설정이라 애니메이션을 껐어요"
+    }
+};
+
+function t(key, vars) {
+    const entry = i18n[key];
+    let s = entry ? (entry[currentLang] || entry.zh) : key;
+    if (vars) {
+        for (const k in vars) s = s.split("{" + k + "}").join(vars[k]);
+    }
+    return s;
+}
+function dimLabel(dim) {
+    const e = dimensionNames[dim];
+    return e ? (e[currentLang] || dim) : dim;
+}
+
+function fillStaticText(lang) {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const entry = i18n[el.dataset.i18n];
+        if (entry && entry[lang]) el.innerText = entry[lang];
+    });
+    document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+        const entry = i18n[el.dataset.i18nPh];
+        if (entry && entry[lang]) el.placeholder = entry[lang];
+    });
+}
+
+function updateProgressText() {
+    $('progress-text').innerText =
+        t('progressFmt', { n: currentQuestionIndex + 1, total: quizData.length });
+}
+
+function applyLanguage(lang) {
+    currentLang = lang;
+    fillStaticText(lang);
+    applyThemeLabel();
+    renderHistory();
+    renderHealth();
+
+    if (currentScreen === "breathe-screen") tickBreath();
+    if (currentScreen === "quiz-screen") updateProgressText();
+
+    if (lastResult) {
+        const diagnosisBox = $('diagnosis-text');
+        if (animationFrameId === null && diagnosisBox.classList.contains('show')) {
+            renderResultTexts(false);
+        }
+    } else {
+        $('diagnosis-text').innerText = t('analyzing');
+    }
+
+    refreshSharePreview();
+    if (wallMode === "list") renderWallList();
+
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.lang === lang);
+    });
+    document.documentElement.lang =
+        lang === "zh" ? "zh-Hant" : lang === "ja" ? "ja" : lang === "ko" ? "ko" : "en";
+}
+
+document.querySelectorAll(".lang-btn").forEach(btn => {
+    btn.addEventListener("click", () => applyLanguage(btn.dataset.lang));
+});
+
+// ---------- 音效（全部走 Clinic.sound 這一個引擎） ----------
+function playTone(options) { Clinic.sound.tone(options); }
+function playClickSound() {
+    playTone({ type: "sine", startFreq: 600, endFreq: 200, duration: 0.08, volume: 0.15 });
+}
+function playPopSound() {
+    playTone({ type: "sine", startFreq: 500, endFreq: 150, duration: 0.15, volume: 0.2 });
+}
+function playDrawSound() {
+    playTone({ type: "triangle", startFreq: 300, endFreq: 700, duration: 0.3, volume: 0.18 });
+}
+
+// ---------- 日夜模式：初始狀態跟系統設定同步決定 ----------
+const prefersDark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+let isDark = prefersDark;
+
+function applyTheme() {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+}
+function applyThemeLabel() {
+    const btn = $('theme-btn');
+    if (btn) btn.innerText = isDark ? t('themeDark') : t('themeLight');
+}
+function toggleTheme() {
+    isDark = !isDark;
+    applyTheme();
+    applyThemeLabel();
+    if (currentScreen === 'result-screen' && animationFrameId === null) {
+        drawRadarChart(userScores, 1);
+    }
+}
+
+function selectAvatar(symbol, element) {
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedAvatarSymbol = symbol;
+    $('user-avatar-display').innerText = symbol;
+}
+
+function showScreen(screenId) {
+    currentScreen = screenId;
+    document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
+    $(screenId).classList.remove('hidden');
+    // 作答途中不顯示語言按鈕，語言在進入測驗前就決定好
+    $('lang-switch').classList.toggle('hidden', screenId === 'quiz-screen');
+
+    if (screenId === 'quiz-screen') { startRageSpawner(); startECG(); }
+    else { stopRageSpawner(); stopECG(); }
+
+    if (screenId !== 'breathe-screen') stopBreathe();
+
+    if (screenId === 'wall-screen') renderWall();
+    else stopBubbles();
+
+    if (screenId === 'health-screen') { renderHealth(); startPulse(); }
+    else stopPulse();
+}
+
+// ---------- 呼吸過場：文字直接讀圓圈動畫自己的時鐘 ----------
+function getBreathState() {
+    const circle = $('breathe-text');
+    const anim = circle.getAnimations ? circle.getAnimations()[0] : null;
+    let ms;
+    if (anim && anim.currentTime != null) ms = Number(anim.currentTime);
+    else ms = performance.now() - breatheStart;           // 備援：不支援或已關閉動畫時，退回自己計時
+    return (ms % 4000) < 2000 ? "in" : "out";             // 前 2 秒放大 = 吸氣，後 2 秒縮小 = 吐氣
+}
+function tickBreath() {
+    const text = t(getBreathState() === "in" ? "breathIn" : "breathOut");
+    const el = $('breathe-text');
+    if (el.textContent !== text) el.textContent = text;
+}
+function stopBreathe() {
+    if (breatheInterval) { clearInterval(breatheInterval); breatheInterval = null; }
+}
+function goToBreathe() {
+    userEmailValue = $('user-email').value.trim();
+    showScreen('breathe-screen');
+    breatheStart = performance.now();
+    stopBreathe();
+    breatheInterval = setInterval(tickBreath, 120);       // 沒有結束條件，離開畫面才清掉
+    tickBreath();
+}
+
+function startQuizFlow() {
+    currentQuestionIndex = 0;
+    answerLog = [];
+    userScores = { "日常": 0, "效率": 0, "社交": 0, "心態": 0, "放鬆": 0, "職涯": 0 };
+    loadQuestion(currentQuestionIndex);
+    showScreen('quiz-screen');
+}
+function sumScores(scores) {
+    return Object.values(scores).reduce((a, b) => a + b, 0);
+}
+function addScores(scores) {
+    for (let dim in scores) userScores[dim] += scores[dim];
+    answerLog.push(sumScores(scores));
+}
+function loadQuestion(index) {
+    const qData = quizData[index];
+    const optionsContainer = $('options-container');
+    updateProgressText();
+    $('question-text').innerText = tr(qData.question);
+    optionsContainer.innerHTML = '';
+    $('draw-result').innerText = '';
+    updateBpmDisplay();
+
+    const frag = document.createDocumentFragment();
+    if (qData.type === "normal") {
+        qData.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = "ABC"[i] + ". " + tr(opt.text);   // 字母由程式補上，不寫在文字裡
+            btn.onclick = () => { playClickSound(); handleSelectOption(opt.scores); };
+            frag.appendChild(btn);
+        });
+    } else if (qData.type === "draw") {
+        const drawBtn = document.createElement('button');
+        drawBtn.className = 'draw-btn';
+        drawBtn.setAttribute('data-i18n', 'drawBtn');
+        drawBtn.innerText = t('drawBtn');
+        drawBtn.onclick = () => { playDrawSound(); drawBtn.disabled = true; handleDraw(qData.options); };
+        frag.appendChild(drawBtn);
+    }
+    optionsContainer.appendChild(frag);
+}
+function handleDraw(options) {
+    const randomOption = options[Math.floor(Math.random() * options.length)];
+    $('draw-result').innerText = `${t('drawResultPrefix')}\n${tr(randomOption.text)}`;
+    setTimeout(() => { handleSelectOption(randomOption.scores); }, 2000);
+}
+function handleSelectOption(scores) {
+    addScores(scores);
+    if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion(currentQuestionIndex);
+    } else {
+        showResult();
+    }
+}
+
+function getQuestionRanges() {
+    return quizData.map(q => {
+        const totals = q.options.map(opt => sumScores(opt.scores));
+        return { min: Math.min(...totals), max: Math.max(...totals) };
+    });
+}
+// 耗損率與歸一化都走同一條 Clinic.math.toPercent
+function calcDrain(total, min, max) {
+    return 100 - Clinic.math.toPercent(total, min, max);
+}
+function getStatus(drain) {
+    if (drain <= 30) return t('statusGood');
+    if (drain <= 60) return t('statusMid');
+    if (drain <= 85) return t('statusLow');
+    return t('statusCritical');
+}
+function countUp(target) {
+    const el = $("score-display");
+    const start = performance.now();
+    const duration = reduceMotion ? 1 : 1000;
+    function step(now) {
+        const tt = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - tt, 3);
+        el.innerText = Math.round(target * eased) + "%";
+        if (tt < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+function getDimensionRange(dimension) {
+    let min = 0, max = 0;
+    quizData.forEach(q => {
+        const contributions = q.options.map(opt => opt.scores[dimension] || 0);
+        min += Math.min(...contributions);
+        max += Math.max(...contributions);
+    });
+    return { min, max };
+}
+function normalize(score, min, max) {
+    return Clinic.math.toPercent(score, min, max);
+}
+function renderDimensions(animate) {
+    const container = $("dim-container");
+    const calcLines = [];
+    const frag = document.createDocumentFragment();
+    const rows = [];
+
+    dimensions.forEach(dim => {
+        const { min, max } = getDimensionRange(dim);
+        const raw = userScores[dim];
+        const normalized = normalize(raw, min, max);
+        const name = dimLabel(dim);
+
+        const row = document.createElement("div");
+        row.className = "dim-row";
+        row.innerHTML = `
+            <div class="dim-head">
+                <span>${name} <span class="raw">${t('dimRaw', { raw, min, max })}</span></span>
+                <span class="score">${normalized}</span>
+            </div>
+            <div class="dim-track">
+                <div class="dim-fill" style="width:${animate ? 0 : normalized}%"></div>
+            </div>
+        `;
+        frag.appendChild(row);
+        rows.push({ row, normalized });
+
+        calcLines.push(
+            `<div class="row"><span>${name}：(${raw} − ${min}) ÷ ${max - min}</span><span>${t('dimScoreUnit', { v: normalized })}</span></div>`
+        );
+    });
+
+    container.innerHTML = "";
+    container.appendChild(frag);
+
+    if (animate) {
+        setTimeout(() => {
+            rows.forEach(r => { r.row.querySelector(".dim-fill").style.width = r.normalized + "%"; });
+        }, 50);
+    }
+
+    $("dim-calc").innerHTML =
+        `<div style="font-weight:bold;margin-bottom:6px;">${t('calcTitle')}</div>` + calcLines.join("");
+}
+
+function resetResultUI() {
+    clearTimeout(prescriptionTimer);
+    clearTimeout(stampTimer);
+    if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+    lastResult = null;
+    lastSharedPlatform = null;
+    const diagnosisBox = $('diagnosis-text');
+    const rxBox = $('prescription-container');
+    diagnosisBox.classList.remove('show');
+    diagnosisBox.innerText = t('analyzing');
+    rxBox.classList.remove('show');
+    rxBox.innerHTML = '';
+    $('stamp').classList.remove('drop');
+    $('dim-container').innerHTML = '';
+    $('dim-calc').innerHTML = '';
+    $('score-display').innerText = '0%';
+    $('fill').style.width = '0%';
+    $('status').innerText = '';
+    $('calc').innerHTML = '';
+    $('share-preview').innerText = t('sharePreviewEmpty');
+    $('share-toast').innerText = '';
+}
+
+function showResult() {
+    resetResultUI();
+    showScreen('result-screen');
+    animationProgress = 0;
+    animateRadarChart();
+}
+
+function animateRadarChart() {
+    animationProgress += reduceMotion ? 1 : 0.02;
+    if (animationProgress > 1) animationProgress = 1;
+    const easedProgress = 1 - Math.pow(1 - animationProgress, 3);
+    drawRadarChart(userScores, easedProgress);
+    if (animationProgress < 1) {
+        animationFrameId = requestAnimationFrame(animateRadarChart);
+    } else {
+        animationFrameId = null;
+        showResultMessage();
+    }
+}
+
+// 把結果頁所有「動態產生的文字」依目前語言重畫一次
+function renderResultTexts(animate) {
+    if (!lastResult) return;
+    const { top, low, drain, total, min, max, ranges, answers } = lastResult;
+
+    const diagnosisBox = $('diagnosis-text');
+    diagnosisBox.innerText = t('diagnosisFmt', {
+        avatar: selectedAvatarSymbol,
+        top: dimLabel(top[0]), topVal: top[1],
+        low: dimLabel(low[0]), lowVal: low[1]
+    });
+    diagnosisBox.classList.add('show');
+
+    renderDimensions(animate);
+
+    $('status').innerText = getStatus(drain);
+
+    const rows = answers.map((score, i) =>
+        `<div class="row"><span>${t('qRow', { n: i + 1, s: score })}</span><span>${t('rangeRow', { min: ranges[i].min, max: ranges[i].max })}</span></div>`
+    ).join('');
+    $('calc').innerHTML = rows +
+        `<div class="row sum"><span>${t('totalRow', { total })}</span><span>${t('fullRangeRow', { min, max })}</span></div>` +
+        `<div class="row"><span>${t('formulaRow', { total, min, span: max - min })}</span><span>${drain}%</span></div>`;
+
+    if (!animate) {
+        const rxBox = $('prescription-container');
+        if (rxBox.classList.contains('show')) generatePrescription(low[0]);
+        drawRadarChart(userScores, 1);
+    }
+}
+
+function showResultMessage() {
+    // 用歸一化後的分數找最強、最弱維度，比原始分數公平
+    const scored = dimensions.map(dim => {
+        const { min, max } = getDimensionRange(dim);
+        return [dim, normalize(userScores[dim], min, max)];
+    });
+    const top = scored.reduce((m, c) => c[1] > m[1] ? c : m);
+    const low = scored.reduce((m, c) => c[1] < m[1] ? c : m);
+
+    const ranges = getQuestionRanges();
+    const min = ranges.reduce((s, r) => s + r.min, 0);
+    const max = ranges.reduce((s, r) => s + r.max, 0);
+    const total = answerLog.reduce((s, n) => s + n, 0);
+    const drain = calcDrain(total, min, max);
+
+    lastResult = { top, low, drain, total, min, max, ranges, answers: answerLog.slice() };
+
+    renderResultTexts(true);
+
+    const fill = $('fill');
+    fill.style.width = '0%';
+    setTimeout(() => {
+        fill.style.width = (100 - drain) + '%';
+        fill.style.backgroundColor = `hsl(${120 * (1 - drain / 100)}, 70%, 45%)`;
+    }, 50);
+    countUp(drain);
+
+    saveRecord(low[0], drain);
+    renderHistory();
+
+    prescriptionTimer = setTimeout(() => generatePrescription(low[0]), 400);
+    stampTimer = setTimeout(dropStamp, 1400);
+}
+
+function generatePrescription(weakestDimension) {
+    const box = $('prescription-container');
+    box.innerHTML = `
+        <h3>${t('prescTitle', { dim: dimLabel(weakestDimension) })}</h3>
+        <p>${tr(prescriptionDB[weakestDimension])}</p>
+    `;
+    setTimeout(() => box.classList.add('show'), 50);
+}
+
+// ---------- 惡搞病歷戳章 ----------
+function dropStamp() {
+    const stamp = $('stamp');
+    stamp.classList.remove('drop');
+    void stamp.offsetWidth; // 強制重新計算樣式，動畫才會重跑
+    stamp.classList.add('drop');
+    setTimeout(playPopSound, 380);
+}
+
+function getRadarColors() {
+    return {
+        outer: isDark ? '#67e8f9' : '#1e88e5',
+        grid: isDark ? '#374151' : '#c5d8ea',
+        fill: isDark ? 'rgba(103, 232, 249, 0.25)' : 'rgba(30, 136, 229, 0.22)',
+        point: isDark ? '#67e8f9' : '#1e88e5',
+        label: isDark ? '#ffffff' : '#263238'
+    };
+}
+
+function drawRadarChart(scores, progress = 1) {
+    const canvas = $('radarChart');
+    const ctx = canvas.getContext('2d');
+    const colors = getRadarColors();
+    const dims = Object.keys(scores);
+    const values = Object.values(scores);
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 200;
+    const maxScore = 10;
+    const total = dims.length;
+    const ang = i => -Math.PI / 2 + (Math.PI * 2 * i) / total;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    for (let i = 0; i < total; i++) {
+        const x = centerX + Math.cos(ang(i)) * radius;
+        const y = centerY + Math.sin(ang(i)) * radius;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = colors.outer;
+    ctx.stroke();
+
+    for (let i = 0; i < total; i++) {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + Math.cos(ang(i)) * radius, centerY + Math.sin(ang(i)) * radius);
+        ctx.strokeStyle = colors.grid;
+        ctx.stroke();
+    }
+
+    const levels = 5;
+    for (let level = 1; level <= levels; level++) {
+        const levelRadius = radius * level / levels;
+        ctx.beginPath();
+        for (let i = 0; i < total; i++) {
+            const x = centerX + Math.cos(ang(i)) * levelRadius;
+            const y = centerY + Math.sin(ang(i)) * levelRadius;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = colors.grid;
+        ctx.stroke();
+    }
+
+    const pointAt = (value, i) => {
+        const clamped = Math.max(-maxScore, Math.min(maxScore, value));
+        const r = radius * (Math.max(clamped, 0) * progress) / maxScore;
+        return [centerX + Math.cos(ang(i)) * r, centerY + Math.sin(ang(i)) * r];
+    };
+
+    ctx.beginPath();
+    values.forEach((value, i) => {
+        const [x, y] = pointAt(value, i);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = colors.fill;
+    ctx.fill();
+    ctx.strokeStyle = colors.outer;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    values.forEach((value, i) => {
+        const [x, y] = pointAt(value, i);
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = colors.point;
+        ctx.fill();
+    });
+
+    ctx.font = '16px "Microsoft JhengHei", sans-serif';
+    ctx.fillStyle = colors.label;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    dims.forEach((dimension, i) => {
+        const labelRadius = radius + 35;
+        ctx.fillText(`${dimLabel(dimension)} ${scores[dimension]}`,
+            centerX + Math.cos(ang(i)) * labelRadius,
+            centerY + Math.sin(ang(i)) * labelRadius);
+    });
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = colors.outer;
+    ctx.fill();
+}
+
+function restartTest() {
+    resetResultUI();
+    showScreen('welcome-screen');
+}
+
+// ---------- 病歷本 ----------
+function loadHistory() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+function saveRecord(weakest, drain) {
+    const record = {
+        time: new Date().toLocaleString("zh-TW", { hour12: false }),
+        scores: { ...userScores },
+        weakest: weakest,
+        drain: drain
+    };
+    const history = loadHistory();
+    history.unshift(record);
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, MAX_RECORDS)));
+    } catch (e) {}
+}
+function clearHistory() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    renderHistory();
+}
+function renderHistory() {
+    const list = $("history-list");
+    if (!list) return;
+    const history = loadHistory();
+    list.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    if (history.length === 0) {
+        const li = document.createElement("li");
+        li.className = "empty";
+        li.textContent = t('historyEmpty');
+        frag.appendChild(li);
+    } else {
+        history.forEach(rec => {
+            const drainText = typeof rec.drain === "number" ? rec.drain + "%" : "—";
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <div class="time">🕒 ${rec.time}</div>
+                <div>${t('histDrain')}：<span class="drain">${drainText}</span>　${t('histWeak')}：${dimLabel(rec.weakest)}</div>`;
+            frag.appendChild(li);
+        });
+    }
+    list.appendChild(frag);
+}
+
+// ---------- 惡言消滅器 ----------
+function destroyTarget(element) {
+    playPopSound();
+    element.style.transform = "scale(1.5)";
+    element.style.opacity = "0";
+    setTimeout(() => { element.remove(); }, 200);
+}
+function spawnRageTarget() {
+    const word = tr(rageWords[Math.floor(Math.random() * rageWords.length)]);   // 產生的當下取目前語言
+    const randomLeft = Math.floor(Math.random() * 70) + 10;
+    const el = document.createElement('div');
+    el.className = 'rage-target';
+    el.textContent = "🔥 " + word;
+    el.style.left = `${randomLeft}%`;
+    el.onclick = function() { destroyTarget(this); };
+    document.body.appendChild(el);
+    setTimeout(() => { if (document.body.contains(el)) el.remove(); }, 8000);
+}
+function startRageSpawner() {
+    if (reduceMotion) return;
+    if (!rageInterval) rageInterval = setInterval(spawnRageTarget, 2000);
+}
+function stopRageSpawner() {
+    if (rageInterval) { clearInterval(rageInterval); rageInterval = null; }
+    document.querySelectorAll('.rage-target').forEach(el => el.remove());
+}
+
+// ---------- 即時心電圖 ----------
+const beatPattern = [
+    { x: 0,  y: 0 },
+    { x: 10, y: 0 },
+    { x: 12, y: -5 },
+    { x: 14, y: 40 },
+    { x: 16, y: -20 },
+    { x: 18, y: 0 },
+    { x: 22, y: -8 },
+    { x: 26, y: 0 },
+    { x: 40, y: 0 }
+];
+const beatWidth = 40;
+let ecgOffset = 0;
+let ecgAnimId = null;
+
+function getQuizProgress() {
+    return Clinic.math.toPercent(currentQuestionIndex, 0, quizData.length) / 100;
+}
+function getEcgSpeed() { return 2 + getQuizProgress() * 6; }
+function getEcgAmplitude() { return 1 + getQuizProgress() * 1.5; }
+
+function sampleBeat(x) {
+    const localX = x % beatWidth;
+    for (let i = 0; i < beatPattern.length - 1; i++) {
+        const a = beatPattern[i];
+        const b = beatPattern[i + 1];
+        if (localX >= a.x && localX <= b.x) {
+            const tt = (localX - a.x) / (b.x - a.x || 1);
+            return a.y + (b.y - a.y) * tt;
+        }
+    }
+    return 0;
+}
+
+function drawECG() {
+    const canvas = $('ecg');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "rgba(74, 222, 128, 0.08)";
+    for (let gx = 0; gx < canvas.width; gx += 20) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, canvas.height);
+        ctx.stroke();
+    }
+
+    const midY = canvas.height / 2;
+    const amplitude = getEcgAmplitude();
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#4ade80";
+    ctx.lineWidth = 2;
+    ctx.shadowColor = "#4ade80";
+    ctx.shadowBlur = 6;
+
+    for (let x = 0; x < canvas.width; x++) {
+        const sampleX = x + ecgOffset;
+        const y = midY - sampleBeat(sampleX) * amplitude;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    if (!reduceMotion) {
+        ecgOffset += getEcgSpeed();
+        ecgAnimId = requestAnimationFrame(drawECG);
+    }
+}
+
+function startECG() {
+    if (ecgAnimId) cancelAnimationFrame(ecgAnimId);
+    ecgOffset = 0;
+    drawECG();
+    updateBpmDisplay();
+}
+function resumeECG() {
+    if (!ecgAnimId) drawECG();
+}
+function stopECG() {
+    if (ecgAnimId) { cancelAnimationFrame(ecgAnimId); ecgAnimId = null; }
+}
+function updateBpmDisplay() {
+    const bpmEl = $('bpm-display');
+    if (bpmEl) bpmEl.innerText = `${Math.round(60 + getQuizProgress() * 60)} bpm`;
+}
+
+// ---------- 匿名發洩牆：資料只存一份，畫面分兩種模式詮釋 ----------
+// 預設三句有四語版本（物件），使用者自己輸入的就是單純的字串
+let complaints = [
+    L("教授說報告延期，結果延到明天早上八點", "The professor said the report was postponed, to 8 a.m. tomorrow", "先生がレポート延期と言ったのに、延びたのは明日の朝8時まで", "교수님이 보고서를 연기해 주셨는데 내일 아침 8시로 연기됐다"),
+    L("咖啡喝到第三杯，手已經開始抖了", "Three coffees in and my hands are already shaking", "コーヒー3杯目で、もう手が震えてきた", "커피 세 잔째인데 벌써 손이 떨린다"),
+    L("同組的人已經三天沒讀訊息了", "My groupmate hasn't read a message in three days", "グループの人が3日間メッセージを既読にしていない", "조원이 사흘째 메시지를 읽지 않고 있다")
+];
+let wallMode = "list";
+let bubbleTimer = null;
+let wallReturnScreen = "welcome-screen";
+
+const complaintText = (item) => typeof item === "string" ? item : tr(item);
+
+function openWall(from) {
+    wallReturnScreen = from || "welcome-screen";
+    showScreen('wall-screen');
+}
+function closeWall() {
+    showScreen(wallReturnScreen);
+}
+
+function submitComplaint() {
+    const input = $("complaintInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    complaints.unshift(text);
+    input.value = "";
+    playPopSound();
+
+    if (wallMode === "list") renderWallList();
+    else spawnBubble(text);
+}
+
+$("complaintInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitComplaint();
+});
+
+function switchWallMode(mode) {
+    playClickSound();
+    wallMode = mode;
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+    });
+    renderWall();
+}
+
+function renderWall() {
+    stopBubbles();
+    $("wallView").classList.toggle("hidden", wallMode !== "list");
+    $("bubbleView").classList.toggle("hidden", wallMode !== "bubble");
+    if (wallMode === "list") renderWallList();
+    else startBubbles();
+}
+
+// 條列牆模式：用 textContent 塞入文字，避免使用者輸入被當成 HTML 執行
+function renderWallList() {
+    const wall = $("wallView");
+    wall.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    if (complaints.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = t('wallEmpty');
+        frag.appendChild(empty);
+    } else {
+        complaints.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "complaint-card";
+            card.textContent = "💬 " + complaintText(item);
+            frag.appendChild(card);
+        });
+    }
+    wall.appendChild(frag);
+}
+
+// 氣泡漂浮模式：定時從陣列隨機抓一句飄上去
+function startBubbles() {
+    stopBubbles();
+    if (complaints.length === 0) return;
+    spawnBubble();
+    bubbleTimer = setInterval(() => spawnBubble(), 1800);
+}
+function stopBubbles() {
+    if (bubbleTimer) { clearInterval(bubbleTimer); bubbleTimer = null; }
+    const view = $("bubbleView");
+    if (view) view.innerHTML = "";
+}
+function spawnBubble(specificText) {
+    if (complaints.length === 0) return;
+    const item = specificText || complaints[Math.floor(Math.random() * complaints.length)];
+    const view = $("bubbleView");
+
+    const el = document.createElement("div");
+    el.className = "bubble";
+    el.textContent = complaintText(item);
+    el.style.left = (Math.random() * 60 + 5) + "%";
+    el.style.animationDuration = (Math.random() * 2 + 5) + "s";
+
+    view.appendChild(el);
+    setTimeout(() => el.remove(), 7500);
+}
+
+// ---------- 出院通知書：同一份診斷，四種語氣 ----------
+let lastSharedPlatform = null;
+let shareToastTimer = null;
+
+const shareKeyMap = { ig: "shareIg", threads: "shareThreads", line: "shareLine", fb: "shareFb" };
+
+function buildShareText(platform) {
+    const { low, drain } = lastResult;
+    return t(shareKeyMap[platform], {
+        drain: drain,
+        remain: 100 - drain,
+        weak: dimLabel(low[0]),
+        advice: tr(prescriptionDB[low[0]])
+    });
+}
+
+// 各平台能不能真的「預填文字」直接開啟分享視窗，各自規則不一樣
+const platformLinks = {
+    // LINE 的網址格式支援把文字塞進訊息欄
+    line: (text) => `https://line.me/R/msg/text/?${encodeURIComponent(text)}`,
+    // FB 的分享對話框只吃網址，自訂文字早被官方拔掉，開啟後仍要自己貼
+    fb: () => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}`
+    // IG、Threads 沒有網頁版預填管道，只能複製文字後請使用者自己貼
+};
+
+async function share(platform) {
+    playClickSound();
+    if (!lastResult) { showShareToast(t('shareNeedResult')); return; }
+
+    const text = buildShareText(platform);
+    lastSharedPlatform = platform;
+    $("share-preview").innerText = text;
+
+    // 先同步開視窗，避免被瀏覽器當成非使用者操作而攔截
+    if (platformLinks[platform]) {
+        window.open(platformLinks[platform](text), "_blank", "noopener");
+    }
+
+    const copied = await copyToClipboard(text);
+    if (!copied) showShareToast(t('shareFail'));
+    else if (platform === "ig") showShareToast(t('shareCopiedIg'));
+    else if (platform === "threads") showShareToast(t('shareCopiedThreads'));
+    else showShareToast(t('shareCopied'));
+}
+
+function refreshSharePreview() {
+    const box = $("share-preview");
+    if (!box) return;
+    if (lastResult && lastSharedPlatform) box.innerText = buildShareText(lastSharedPlatform);
+    else box.innerText = t('sharePreviewEmpty');
+}
+
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (e) {
+        // 舊瀏覽器或權限被擋時，退回 execCommand
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return !!ok;
+        } catch (e2) {
+            return false;
+        }
+    }
+}
+
+function showShareToast(msg) {
+    const toast = $("share-toast");
+    toast.innerText = msg;
+    clearTimeout(shareToastTimer);
+    shareToastTimer = setTimeout(() => { toast.innerText = ""; }, 3000);
+}
+
+// ---------- 院內自主健檢 ----------
+function openHealth() { showScreen('health-screen'); }
+function closeHealth() { showScreen('welcome-screen'); }
+
+// 檢驗單一：三個原本各寫各的地方，現在全部呼叫同一個函式
+function renderRefactorRows() {
+    const drain = 100 - Clinic.math.toPercent(14, -5, 24);
+    const mindset = Clinic.math.toPercent(2, -10, 5);
+    const amplitude = Clinic.math.toPercent(3, 0, 5);
+    $("refactorRows").innerHTML = `
+        <div class="hc-row"><span>${t('hcR1')}</span><b>${drain}%</b></div>
+        <div class="hc-row"><span>${t('hcR2')}</span><b>${t('dimScoreUnit', { v: mindset })}</b></div>
+        <div class="hc-row"><span>${t('hcR3')}</span><b>${amplitude}%</b></div>`;
+}
+
+// 檢驗單二：功能偵測，直接問瀏覽器有沒有，不靠猜裝置型號
+const checks = [
+    { name: "Touch",                       test: () => "ontouchstart" in window || navigator.maxTouchPoints > 0 },
+    { name: "Pointer Events",              test: () => "PointerEvent" in window },
+    { name: "Web Audio",                   test: () => !!(window.AudioContext || window.webkitAudioContext) },
+    { name: "Clipboard API",               test: () => !!(navigator.clipboard && navigator.clipboard.writeText) },
+    { name: "Secure context (https / localhost)", test: () => window.isSecureContext },
+    { name: "localStorage",                test: () => {
+        try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; }
+        catch (e) { return false; }
+    }},
+    { name: "dvh",                         test: () => !!(window.CSS && CSS.supports && CSS.supports("height", "100dvh")) }
+];
+function renderCompat() {
+    const frag = document.createDocumentFragment();
+    checks.forEach(c => {
+        let ok = false;
+        try { ok = !!c.test(); } catch (e) {}
+        const row = document.createElement("div");
+        row.className = "hc-row";
+        const name = document.createElement("span");
+        name.textContent = c.name;
+        const result = document.createElement("span");
+        result.className = ok ? "ok" : "bad";
+        result.textContent = ok ? t('hcOk') : t('hcNo');
+        row.appendChild(name);
+        row.appendChild(result);
+        frag.appendChild(row);
+    });
+    const box = $("compatRows");
+    box.innerHTML = "";
+    box.appendChild(frag);
+}
+function renderAudioStatus() {
+    const el = $("audioStatus");
+    if (el) el.innerText = audioUnlocked ? t('hcAudioOk') : t('hcAudioWait');
+}
+function testSound() {
+    Clinic.sound.unlock().then(() => playClickSound());
+}
+
+// 檢驗單三：效能。逐筆寫入 vs 批次寫入
+const BENCH_COUNT = 2000;
+let lastBench = null;
+
+// 壞習慣：每放一個就讀一次版面，逼瀏覽器每一圈都重算
+function renderNaive(n) {
+    const box = $("benchBox");
+    box.innerHTML = "";
+    const t0 = performance.now();
+    for (let i = 0; i < n; i++) {
+        const el = document.createElement("div");
+        el.className = "dot";
+        box.appendChild(el);
+        el.offsetHeight;
+    }
+    return performance.now() - t0;
+}
+// 好習慣：先在暫存盤排好，最後一次端上桌，版面只算一次
+function renderBatch(n) {
+    const box = $("benchBox");
+    box.innerHTML = "";
+    const t0 = performance.now();
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+        const el = document.createElement("div");
+        el.className = "dot";
+        frag.appendChild(el);
+    }
+    box.appendChild(frag);
+    box.offsetHeight;
+    return performance.now() - t0;
+}
+function runBenchmark() {
+    // 先暖機，避免第一次執行比較慢影響比較
+    renderNaive(200);
+    renderBatch(200);
+    const naive = renderNaive(BENCH_COUNT);
+    const batch = renderBatch(BENCH_COUNT);
+    lastBench = { naive, batch };
+    renderBenchRows();
+}
+function renderBenchRows() {
+    if (!lastBench) { $("benchRows").innerHTML = ""; return; }
+    const { naive, batch } = lastBench;
+    const times = naive / Math.max(batch, 0.01);
+    $("benchRows").innerHTML = `
+        <div class="hc-row"><span>${t('hcNaive')}</span><b>${naive.toFixed(1)} ms</b></div>
+        <div class="hc-row"><span>${t('hcBatch')}</span><b>${batch.toFixed(1)} ms</b></div>
+        <div class="hc-row"><span>${t('hcDiff')}</span><b>${t('hcDiffVal', { x: times.toFixed(1) })}</b></div>`;
+}
+
+// 背景分頁暫停動畫：頁面被藏起來就停，回來再繼續
+let pulseRaf = null;
+let pulseX = -100;
+function pulseLoop() {
+    pulseX += 1.5;
+    if (pulseX > 340) pulseX = -100;
+    $("pulseBar").style.transform = `translateX(${pulseX}%)`;
+    pulseRaf = requestAnimationFrame(pulseLoop);
+}
+function startPulse() {
+    if (reduceMotion) { $("pulseStatus").innerText = t('hcPulseReduced'); return; }
+    if (!pulseRaf) pulseRaf = requestAnimationFrame(pulseLoop);
+    $("pulseStatus").innerText = t('hcPulseRun');
+}
+function stopPulse() {
+    if (pulseRaf) cancelAnimationFrame(pulseRaf);
+    pulseRaf = null;
+}
+
+function renderHealth() {
+    renderRefactorRows();
+    renderCompat();
+    renderAudioStatus();
+    renderBenchRows();
+    if (reduceMotion) $("pulseStatus").innerText = t('hcPulseReduced');
+    else if (pulseRaf) $("pulseStatus").innerText = t('hcPulseRun');
+}
+
+// 整站的背景分頁處理：頁面被藏起來就把所有迴圈停掉，回來再依畫面恢復
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        stopECG();
+        stopRageSpawner();
+        stopBubbles();
+        stopPulse();
+    } else {
+        if (currentScreen === "quiz-screen") { startRageSpawner(); resumeECG(); }
+        else if (currentScreen === "wall-screen" && wallMode === "bubble") startBubbles();
+        else if (currentScreen === "health-screen") startPulse();
+    }
+});
+
+window.onload = () => {
+    applyTheme();
+    applyLanguage("zh");
+    renderHistory();
+    $("share-preview").innerText = t('sharePreviewEmpty');
+};
+</script>
+</body>
+</html>
